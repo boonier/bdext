@@ -1,1 +1,11 @@
-BDExt.xcodeproj/*
+# xcode noise
+build/*
+*.pbxuser
+*.mode1v3
+
+# old skool
+.svn
+
+# osx noise
+.DS_Store
+profile
