@@ -3,9 +3,8 @@
 using namespace plogue::biduleSDK;
 using namespace acme;
 
+#include <string>
 #include <iostream>
-
-using namespace std;
 
 uint32_t xxxor128(void)
 {
@@ -35,7 +34,10 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _numFreqOuts = 0;
     _numMagIns = 0;
     _numMagOuts = 0;
-    _numParams = 4;
+    
+    _numParams = 5;
+    _numUIColumns=1;
+    
     _index = 0;
     _lower = 0;
     _length = 16;
@@ -44,13 +46,16 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _maxOutBound = 16;
 }
 
+
 TriggerPattern::~TriggerPattern()
 {
 }
 
 bool TriggerPattern::init()
 {
+    cout << "TriggerPattern init" << endl;
     for (int i = 0; i < 256; i++)
+        
         _pattern[i] = i % _numAudioOuts;
     return true;
 }
@@ -92,6 +97,7 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
     pinfos[0].paramInfo.pd.defaultValue = 0;
     pinfos[0].paramInfo.pd.minValue = 0;
     pinfos[0].paramInfo.pd.maxValue = 256;
+    pinfos[0].paramInfo.pd.precision = 0;
 
     pinfos[1].id = 1;
     strcpy(pinfos[1].name, "Length");
@@ -102,6 +108,7 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
     pinfos[1].paramInfo.pd.defaultValue = 16;
     pinfos[1].paramInfo.pd.minValue = 0;
     pinfos[1].paramInfo.pd.maxValue = 256;
+    pinfos[1].paramInfo.pd.precision = 0;
 
     pinfos[2].id = 2;
     strcpy(pinfos[2].name, "Min Out");
@@ -112,6 +119,7 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
     pinfos[2].paramInfo.pd.defaultValue = 0;
     pinfos[2].paramInfo.pd.minValue = 0;
     pinfos[2].paramInfo.pd.maxValue = 16;
+    pinfos[2].paramInfo.pd.precision = 0;
 
     pinfos[3].id = 3;
     strcpy(pinfos[3].name, "Max Out");
@@ -122,6 +130,16 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
     pinfos[3].paramInfo.pd.defaultValue = 0;
     pinfos[3].paramInfo.pd.minValue = 0;
     pinfos[3].paramInfo.pd.maxValue = 16;
+    pinfos[3].paramInfo.pd.precision = 0;
+    
+    pinfos[4].id = 4;
+    strcpy(pinfos[4].name, "Current pattern data");
+    pinfos[4].type = STRINGPARAM;
+    pinfos[4].ctrlType = GUICTRL_NOGUI;
+    pinfos[4].linkable = 0;
+    pinfos[4].saveable = 1;
+//    pinfos[4].paramInfo.ps.defaultValue[0] = 1;
+    
 }
 
 void TriggerPattern::getParameterChoices(long id, std::vector<std::string> &vec)
@@ -138,6 +156,9 @@ void TriggerPattern::parameterUpdate(long id)
         getParameterValue(2, _minOutBound);
     if (id == 3)
         getParameterValue(3, _maxOutBound);
+    if (id == 4)
+        cout << "pattern data updated!" << endl;
+//        getParameterValue(4, _maxOutBound);
 }
 
 void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *midiIn, MIDIEvents *midiOut, Frequency ***freqIn, Frequency ***freqOut,
@@ -154,21 +175,28 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
         Sample trigger = (*in0++);
         Sample newPattern = (*in1++);
 
-        if (trigger == 1.f) {
+        if (trigger == 1.f)
+        {
             _index = (_index + 1);
             if (_index >= _lower + _length)
                 _index = _lower;
             if(_index < _lower)
                 _index = _lower;
         }
-        
         if (newPattern == 1.f) {
-            cout << "New pattern triggered" << endl;
+            string str = "";
             
             for (int i = 0; i < 256; i++) {
                 _pattern[i] = abs((int)xxxor128());
-                cout << "_pattern number [" << i << "]: " << _pattern[i] << endl;
+                str += to_string(_pattern[i]) + ";";
             }
+            
+            updateParameter(4, str);
+            parameterUpdate(4);
+                // something here to push pattern to TEXTAREA
+                // can be saved to preset then?
+                // in init() check TEXTAREA for contents length
+                // then recall > serialise > push into _pattern
         }
 
         int t = _pattern[_index % 256];
