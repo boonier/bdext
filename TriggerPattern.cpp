@@ -44,6 +44,8 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _pattern = new int[256];
     _minOutBound = 0;
     _maxOutBound = 16;
+    
+    _patternCache = new int[256];
 }
 
 
@@ -54,9 +56,20 @@ TriggerPattern::~TriggerPattern()
 bool TriggerPattern::init()
 {
     cout << "TriggerPattern init" << endl;
-    for (int i = 0; i < 256; i++)
-        
-        _pattern[i] = i % _numAudioOuts;
+    
+    // if param 4 is populated
+    // use the data from that
+    // else
+    // fil with the below
+//    if ( ) {
+//
+//    } else {
+//        for (int i = 0; i < 256; i++)
+//            _pattern[i] = i % _numAudioOuts;
+//    }
+    
+    getParameterValue(4, );
+                      
     return true;
 }
 
@@ -193,10 +206,10 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
             
             updateParameter(4, str);
             parameterUpdate(4);
-                // something here to push pattern to TEXTAREA
-                // can be saved to preset then?
-                // in init() check TEXTAREA for contents length
-                // then recall > serialise > push into _pattern
+            // something here to push pattern to TEXTAREA
+            // can be saved to preset then?
+            // in init() check TEXTAREA for contents length
+            // then recall > serialise > push into _pattern
         }
 
         int t = _pattern[_index % 256];

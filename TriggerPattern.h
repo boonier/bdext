@@ -28,6 +28,7 @@ protected:
 	int _index;
 	int *_pattern;
 	int _minOutBound, _maxOutBound;
+    int *_patternCache;
 };
 }; // namespace acme
 
