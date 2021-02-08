@@ -5,6 +5,8 @@ using namespace acme;
 
 #include <string>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 uint32_t xxxor128(void)
 {
@@ -44,32 +46,26 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _pattern = new int[256];
     _minOutBound = 0;
     _maxOutBound = 16;
-    
-    _patternCache = new int[256];
+//    _patternCache = "";
 }
 
 
-TriggerPattern::~TriggerPattern()
-{
-}
+TriggerPattern::~TriggerPattern() {}
 
 bool TriggerPattern::init()
 {
     cout << "TriggerPattern init" << endl;
+    getParameterValue(4, _patternCache);
     
-    // if param 4 is populated
-    // use the data from that
-    // else
-    // fil with the below
-//    if ( ) {
-//
-//    } else {
-//        for (int i = 0; i < 256; i++)
-//            _pattern[i] = i % _numAudioOuts;
-//    }
-    
-    getParameterValue(4, );
-                      
+    if (_patternCache.length()) {
+        cout << "running presetToPattern" << endl;
+        presetToPattern(_patternCache);
+    } else {
+        cout << "initialising _pattern array" << endl;
+        for (int i = 0; i < 256; i++)
+            _pattern[i] = i % _numAudioOuts;
+    }
+
     return true;
 }
 
@@ -155,12 +151,12 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
     
 }
 
-void TriggerPattern::getParameterChoices(long id, std::vector<std::string> &vec)
-{
-}
+void TriggerPattern::getParameterChoices(long id, std::vector<std::string> &vec) {}
 
 void TriggerPattern::parameterUpdate(long id)
 {
+//    cout << "ID " << id << " CALLED parameterUpdate" << endl;
+    
     if (id == 0)
         getParameterValue(0, _lower);
     if (id == 1)
@@ -170,8 +166,26 @@ void TriggerPattern::parameterUpdate(long id)
     if (id == 3)
         getParameterValue(3, _maxOutBound);
     if (id == 4)
-        cout << "pattern data updated!" << endl;
-//        getParameterValue(4, _maxOutBound);
+//        cout << "pattern data updated!" << endl;
+//        cout << "textarea pinged/updated!" << endl;
+        getParameterValue(4, _patternCache);
+        presetToPattern(_patternCache);
+}
+
+
+void TriggerPattern::presetToPattern(string _patternCache) {
+    vector<string> out;
+    string token;
+    std::istringstream stream(_patternCache);
+    
+    while (std::getline(stream, token, ';')) {
+        out.push_back(token);
+    }
+    
+    for (int i=0; i < out.size(); i++) {
+      _pattern[i] = stoi(out.at(i));
+//      cout << "numbersOld index " << i << ": " << _pattern[i] << endl;
+    }
 }
 
 void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *midiIn, MIDIEvents *midiOut, Frequency ***freqIn, Frequency ***freqOut,
@@ -203,13 +217,9 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
                 _pattern[i] = abs((int)xxxor128());
                 str += to_string(_pattern[i]) + ";";
             }
-            
+//            cout << "Filled string: " << str.length() << endl;
             updateParameter(4, str);
-            parameterUpdate(4);
-            // something here to push pattern to TEXTAREA
-            // can be saved to preset then?
-            // in init() check TEXTAREA for contents length
-            // then recall > serialise > push into _pattern
+//            parameterUpdate(4);
         }
 
         int t = _pattern[_index % 256];

@@ -1,7 +1,7 @@
 #ifndef TriggerPattern_H
 #define TriggerPattern_H
 
-#include <string>
+
 #include "../common/BiduleSDK.h"
 
 namespace acme
@@ -23,12 +23,16 @@ public:
 
 	virtual void process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *midiIn, MIDIEvents *midiOut, Frequency ***freqIn, Frequency ***freqOut, Magnitude ***magIn, Magnitude ***magOut, SyncInfo *syncIn, SyncInfo *syncOut);
 
+
+    
 protected:
 	int _lower, _length;
 	int _index;
 	int *_pattern;
 	int _minOutBound, _maxOutBound;
-    int *_patternCache;
+    string _patternCache;
+    
+    void presetToPattern(string _patternCache);
 };
 }; // namespace acme
 
