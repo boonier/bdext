@@ -28,7 +28,7 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     //  _caps = CAP_SYNCMASTER | CAP_SYNCSLAVE
     _caps = 0;
 
-    _numAudioIns = 2;
+    _numAudioIns = 3;
     _numAudioOuts = 16;
     _numMIDIIns = 0;
     _numMIDIOuts = 0;
@@ -38,7 +38,7 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _numMagOuts = 0;
     
     _numParams = 5;
-    _numUIColumns=1;
+    _numUIColumns = 1;
     
     _index = 0;
     _lower = 0;
@@ -57,7 +57,7 @@ bool TriggerPattern::init()
     cout << "TriggerPattern init" << endl;
     getParameterValue(4, _patternCache);
     
-    if (_patternCache.length()) {
+    if (_patternCache.length() > 0) {
         cout << "running presetToPattern" << endl;
         presetToPattern(_patternCache);
     } else {
@@ -73,6 +73,7 @@ void TriggerPattern::getAudioInNames(std::vector<std::string> &vec)
 {
     vec.push_back("Trigger");
     vec.push_back("New Pattern");
+    vec.push_back("Reset");
 }
 
 void TriggerPattern::getAudioOutNames(std::vector<std::string> &vec)
@@ -155,13 +156,16 @@ void TriggerPattern::getParameterChoices(long id, std::vector<std::string> &vec)
 
 void TriggerPattern::parameterUpdate(long id)
 {
-//    cout << "ID " << id << " CALLED parameterUpdate" << endl;
+    cout << "ID " << id << " CALLED parameterUpdate" << endl;
     
     if (id == 0)
+//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(0, _lower);
     if (id == 1)
+//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(1, _length);
     if (id == 2)
+//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(2, _minOutBound);
     if (id == 3)
         getParameterValue(3, _maxOutBound);
@@ -173,7 +177,7 @@ void TriggerPattern::parameterUpdate(long id)
 }
 
 
-void TriggerPattern::presetToPattern(string _patternCache) {
+void TriggerPattern::presetToPattern(string &_patternCache) {
     vector<string> out;
     string token;
     std::istringstream stream(_patternCache);
@@ -194,6 +198,7 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
 
     Sample *in0 = sampleIn[0];
     Sample *in1 = sampleIn[1];
+    Sample *in2 = sampleIn[2];
 
     long sampleFrames = _dspInfo.bufferSize;
 
@@ -201,15 +206,19 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
     {
         Sample trigger = (*in0++);
         Sample newPattern = (*in1++);
-
-        if (trigger == 1.f)
-        {
+        Sample reset = (*in2++);
+        
+        if (reset == 1.f)
+            _index = 0;
+        
+        if (trigger == 1.f) {
             _index = (_index + 1);
             if (_index >= _lower + _length)
                 _index = _lower;
             if(_index < _lower)
                 _index = _lower;
         }
+        
         if (newPattern == 1.f) {
             string str = "";
             
@@ -217,9 +226,9 @@ void TriggerPattern::process(Sample **sampleIn, Sample **sampleOut, MIDIEvents *
                 _pattern[i] = abs((int)xxxor128());
                 str += to_string(_pattern[i]) + ";";
             }
-//            cout << "Filled string: " << str.length() << endl;
+            
             updateParameter(4, str);
-//            parameterUpdate(4);
+
         }
 
         int t = _pattern[_index % 256];
