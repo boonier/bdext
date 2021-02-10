@@ -46,7 +46,7 @@ TriggerPattern::TriggerPattern(BiduleHost *host) : BidulePlugin(host)
     _pattern = new int[256];
     _minOutBound = 0;
     _maxOutBound = 16;
-//    _patternCache = "";
+    _patternCache = "";
 }
 
 
@@ -54,14 +54,14 @@ TriggerPattern::~TriggerPattern() {}
 
 bool TriggerPattern::init()
 {
-    cout << "TriggerPattern init" << endl;
+    cout << "TriggerPattern init: checking _patternCache" << endl;
     getParameterValue(4, _patternCache);
     
     if (_patternCache.length() > 0) {
-        cout << "running presetToPattern" << endl;
+        cout << "_patternCache returned content, running presetToPattern" << endl;
         presetToPattern(_patternCache);
     } else {
-        cout << "initialising _pattern array" << endl;
+        cout << "no _patternCache content: initialising _pattern array" << endl;
         for (int i = 0; i < 256; i++)
             _pattern[i] = i % _numAudioOuts;
     }
@@ -154,28 +154,21 @@ void TriggerPattern::getParametersInfos(ParameterInfo *pinfos)
 
 void TriggerPattern::getParameterChoices(long id, std::vector<std::string> &vec) {}
 
-void TriggerPattern::parameterUpdate(long id)
-{
+void TriggerPattern::parameterUpdate(long id) {
     cout << "ID " << id << " CALLED parameterUpdate" << endl;
     
     if (id == 0)
-//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(0, _lower);
     if (id == 1)
-//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(1, _length);
     if (id == 2)
-//        cout << "ID " << id << " CALLED parameterUpdate" << endl;
         getParameterValue(2, _minOutBound);
     if (id == 3)
         getParameterValue(3, _maxOutBound);
     if (id == 4)
-//        cout << "pattern data updated!" << endl;
-//        cout << "textarea pinged/updated!" << endl;
         getParameterValue(4, _patternCache);
         presetToPattern(_patternCache);
 }
-
 
 void TriggerPattern::presetToPattern(string &_patternCache) {
     vector<string> out;
